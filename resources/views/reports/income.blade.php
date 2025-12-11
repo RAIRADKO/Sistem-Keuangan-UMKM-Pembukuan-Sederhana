@@ -1,121 +1,121 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                📈 {{ __('Laporan Pemasukan') }} - {{ $store->name }}
-            </h2>
-            <div class="flex space-x-2">
-                <a href="{{ route('reports.export', ['type' => 'income', 'format' => 'pdf', 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 transition">
-                    📄 PDF
-                </a>
-                <a href="{{ route('reports.export', ['type' => 'income', 'format' => 'excel', 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 transition">
-                    📊 Excel
-                </a>
+    <div class="page-container">
+        <!-- Page Header -->
+        <div class="page-header animate-fade-in">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <h1 class="page-title">📈 Laporan Pemasukan</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">{{ $store->name }}</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{{ route('reports.export', ['type' => 'income', 'format' => 'pdf', 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-danger">
+                        📄 PDF
+                    </a>
+                    <a href="{{ route('reports.export', ['type' => 'income', 'format' => 'excel', 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-success">
+                        📊 Excel
+                    </a>
+                </div>
             </div>
         </div>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Filter -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg mb-6">
-                <div class="p-4">
-                    <form method="GET" action="{{ route('reports.income') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="text-sm text-gray-600 dark:text-gray-400">Dari Tanggal</label>
-                            <input type="date" name="start_date" value="{{ $startDate }}" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-600 dark:text-gray-400">Sampai Tanggal</label>
-                            <input type="date" name="end_date" value="{{ $endDate }}" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-600 dark:text-gray-400">Kategori</label>
-                            <select name="account_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm text-sm">
-                                <option value="">Semua</option>
-                                @foreach($accounts as $account)
-                                    <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-500">Filter</button>
-                        </div>
-                    </form>
-                </div>
+        <!-- Filter -->
+        <div class="card mb-8 animate-fade-in-up" style="opacity: 0; animation-delay: 0.1s;">
+            <div class="p-6">
+                <form method="GET" action="{{ route('reports.income') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="form-label">Dari Tanggal</label>
+                        <input type="date" name="start_date" value="{{ $startDate }}" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">Sampai Tanggal</label>
+                        <input type="date" name="end_date" value="{{ $endDate }}" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">Kategori</label>
+                        <select name="account_id" class="form-input">
+                            <option value="">Semua</option>
+                            @foreach($accounts as $account)
+                                <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="btn btn-primary w-full">Filter</button>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <!-- Summary -->
-            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6">
-                <p class="text-sm text-green-600 dark:text-green-400">Total Pemasukan ({{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }})</p>
-                <p class="text-3xl font-bold text-green-700 dark:text-green-300">Rp {{ number_format($total, 0, ',', '.') }}</p>
-            </div>
+        <!-- Summary -->
+        <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-900/30 dark:via-teal-900/30 dark:to-cyan-900/30 rounded-2xl p-8 mb-8 border border-emerald-100 dark:border-emerald-800 animate-fade-in-up" style="opacity: 0; animation-delay: 0.2s;">
+            <p class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Total Pemasukan ({{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }})</p>
+            <p class="text-4xl font-bold text-emerald-700 dark:text-emerald-300 mt-2">Rp {{ number_format($total, 0, ',', '.') }}</p>
+        </div>
 
-            <!-- By Category -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Berdasarkan Kategori</h3>
-                        @if($byCategory->count() > 0)
-                            <div class="space-y-4">
-                                @foreach($byCategory as $item)
-                                    <div>
-                                        <div class="flex justify-between mb-1">
-                                            <span class="text-gray-700 dark:text-gray-300">{{ $item['account']->name }}</span>
-                                            <span class="font-medium text-gray-900 dark:text-gray-100">Rp {{ number_format($item['total'], 0, ',', '.') }}</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ $total > 0 ? ($item['total'] / $total * 100) : 0 }}%"></div>
-                                        </div>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $item['count'] }} transaksi</p>
+        <!-- By Category -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="card animate-fade-in-up" style="opacity: 0; animation-delay: 0.3s;">
+                <div class="card-body">
+                    <h3 class="section-title mb-6">Berdasarkan Kategori</h3>
+                    @if($byCategory->count() > 0)
+                        <div class="space-y-5">
+                            @foreach($byCategory as $item)
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-slate-700 dark:text-slate-300 font-medium">{{ $item['account']->name }}</span>
+                                        <span class="font-bold text-slate-900 dark:text-slate-100">Rp {{ number_format($item['total'], 0, ',', '.') }}</span>
                                     </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-gray-500 dark:text-gray-400">Tidak ada data</p>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Chart placeholder -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Distribusi Pemasukan</h3>
-                        <canvas id="incomeChart" height="200"></canvas>
-                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" style="width: {{ $total > 0 ? ($item['total'] / $total * 100) : 0 }}%"></div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ $item['count'] }} transaksi</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-slate-500 dark:text-slate-400 text-center py-8">Tidak ada data</p>
+                    @endif
                 </div>
             </div>
 
-            <!-- Detail Table -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Detail Transaksi</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
+            <!-- Chart -->
+            <div class="card animate-fade-in-up" style="opacity: 0; animation-delay: 0.35s;">
+                <div class="card-body">
+                    <h3 class="section-title mb-6">Distribusi Pemasukan</h3>
+                    <canvas id="incomeChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Table -->
+        <div class="card animate-fade-in-up" style="opacity: 0; animation-delay: 0.4s;">
+            <div class="card-body">
+                <h3 class="section-title mb-6">Detail Transaksi</h3>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kategori</th>
+                                <th>Deskripsi</th>
+                                <th class="text-right">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                            @forelse($transactions as $transaction)
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tanggal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kategori</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Deskripsi</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Jumlah</th>
+                                    <td class="text-slate-500 dark:text-slate-400">{{ $transaction->transaction_date->format('d/m/Y') }}</td>
+                                    <td class="font-medium text-slate-900 dark:text-slate-100">{{ $transaction->account->name }}</td>
+                                    <td class="text-slate-500 dark:text-slate-400">{{ $transaction->description ?? '-' }}</td>
+                                    <td class="text-right money-positive">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                @forelse($transactions as $transaction)
-                                    <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ $transaction->transaction_date->format('d/m/Y') }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $transaction->account->name }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ $transaction->description ?? '-' }}</td>
-                                        <td class="px-6 py-4 text-sm text-right font-medium text-green-600 dark:text-green-400">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada transaksi dalam periode ini</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-12 text-slate-500 dark:text-slate-400">Tidak ada transaksi dalam periode ini</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -133,18 +133,32 @@
                     datasets: [{
                         data: categoryData.map(d => d.total),
                         backgroundColor: [
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(59, 130, 246, 0.8)',
-                            'rgba(168, 85, 247, 0.8)',
-                            'rgba(249, 115, 22, 0.8)',
-                            'rgba(236, 72, 153, 0.8)',
+                            'rgba(16, 185, 129, 0.85)',
+                            'rgba(6, 182, 212, 0.85)',
+                            'rgba(59, 130, 246, 0.85)',
+                            'rgba(168, 85, 247, 0.85)',
+                            'rgba(249, 115, 22, 0.85)',
                         ],
+                        borderWidth: 0,
+                        borderRadius: 4,
                     }]
                 },
                 options: {
                     responsive: true,
+                    cutout: '65%',
                     plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 12, weight: '500' }
+                            }
+                        },
                         tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            padding: 14,
+                            cornerRadius: 10,
                             callbacks: {
                                 label: function(context) {
                                     return context.label + ': Rp ' + context.raw.toLocaleString('id-ID');

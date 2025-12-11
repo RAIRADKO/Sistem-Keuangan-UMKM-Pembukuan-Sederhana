@@ -1,11 +1,11 @@
 <x-app-layout>
-    <div class="page-container animate-fade-in">
+    <div class="page-container">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
                     <h1 class="page-title">Transaksi</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-2">{{ $store->name }}</p>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">{{ $store->name }}</p>
                 </div>
                 <div class="flex gap-3">
                     <a href="{{ route('transactions.create', ['type' => 'income']) }}" class="btn btn-success">
@@ -25,8 +25,8 @@
         </div>
 
         <!-- Filters - Clean & minimal -->
-        <div class="card mb-8">
-            <div class="p-5">
+        <div class="card mb-8 animate-fade-in-up" style="opacity: 0; animation-delay: 0.1s;">
+            <div class="p-6">
                 <form method="GET" action="{{ route('transactions.index') }}" class="grid grid-cols-2 md:grid-cols-6 gap-4">
                     <div>
                         <label class="form-label">Tipe</label>
@@ -66,20 +66,20 @@
 
         <!-- Summary Stats -->
         <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-5">
-                <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">Total Pemasukan</p>
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-2xl p-6 border border-emerald-100 dark:border-emerald-800 animate-fade-in-up" style="opacity: 0; animation-delay: 0.2s;">
+                <p class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Total Pemasukan</p>
                 <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">Rp {{ number_format($summary['total_income'], 0, ',', '.') }}</p>
             </div>
-            <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-5">
-                <p class="text-sm font-medium text-red-600 dark:text-red-400">Total Pengeluaran</p>
-                <p class="text-2xl font-bold text-red-700 dark:text-red-300 mt-1">Rp {{ number_format($summary['total_expense'], 0, ',', '.') }}</p>
+            <div class="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 rounded-2xl p-6 border border-rose-100 dark:border-rose-800 animate-fade-in-up" style="opacity: 0; animation-delay: 0.25s;">
+                <p class="text-sm font-semibold text-rose-600 dark:text-rose-400">Total Pengeluaran</p>
+                <p class="text-2xl font-bold text-rose-700 dark:text-rose-300 mt-1">Rp {{ number_format($summary['total_expense'], 0, ',', '.') }}</p>
             </div>
         </div>
 
         <!-- Transactions Table -->
-        <div class="card">
+        <div class="card animate-fade-in-up" style="opacity: 0; animation-delay: 0.3s;">
             @if($transactions->count() > 0)
-                <div class="table-container border-0 rounded-t-xl">
+                <div class="table-container border-0 rounded-t-2xl">
                     <table class="table">
                         <thead>
                             <tr>
@@ -92,10 +92,10 @@
                                 <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                             @foreach($transactions as $transaction)
                                 <tr>
-                                    <td class="text-gray-600 dark:text-gray-400">
+                                    <td class="text-slate-600 dark:text-slate-400">
                                         {{ $transaction->transaction_date->format('d M Y') }}
                                     </td>
                                     <td>
@@ -103,10 +103,10 @@
                                             {{ $transaction->type === 'income' ? 'Masuk' : 'Keluar' }}
                                         </span>
                                     </td>
-                                    <td class="font-medium text-gray-900 dark:text-gray-100">
+                                    <td class="font-medium text-slate-900 dark:text-slate-100">
                                         {{ $transaction->account->name }}
                                     </td>
-                                    <td class="text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                                    <td class="text-slate-600 dark:text-slate-400 max-w-xs truncate">
                                         {{ $transaction->description ?? '-' }}
                                     </td>
                                     <td class="text-right {{ $transaction->type === 'income' ? 'money-positive' : 'money-negative' }}">
@@ -114,16 +114,16 @@
                                     </td>
                                     <td class="text-center">
                                         @if($transaction->proof_file)
-                                            <a href="{{ Storage::url($transaction->proof_file) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+                                            <a href="{{ Storage::url($transaction->proof_file) }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 text-sm font-medium transition-colors">
                                                 Lihat
                                             </a>
                                         @else
-                                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                                            <span class="text-slate-300 dark:text-slate-600">—</span>
                                         @endif
                                     </td>
                                     <td class="text-center">
                                         <div class="flex justify-center gap-3">
-                                            <a href="{{ route('transactions.edit', $transaction) }}" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                                            <a href="{{ route('transactions.edit', $transaction) }}" class="text-slate-400 hover:text-cyan-600 transition-colors">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                 </svg>
@@ -131,7 +131,7 @@
                                             <form method="POST" action="{{ route('transactions.destroy', $transaction) }}" class="inline" onsubmit="return confirm('Hapus transaksi ini?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors">
+                                                <button type="submit" class="text-slate-400 hover:text-rose-600 transition-colors">
                                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                     </svg>
@@ -146,7 +146,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700">
                     {{ $transactions->links() }}
                 </div>
             @else
