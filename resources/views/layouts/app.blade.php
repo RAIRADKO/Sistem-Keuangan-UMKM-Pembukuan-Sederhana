@@ -21,6 +21,18 @@
         <style>
             body { font-family: 'Inter', sans-serif; }
         </style>
+
+        <!-- Dark Mode Init (prevents flash) -->
+        <script>
+            (function() {
+                const darkMode = localStorage.getItem('darkMode');
+                if (darkMode === 'true' || (!darkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gradient-to-br from-cyan-50 via-sky-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">

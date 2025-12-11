@@ -2,9 +2,7 @@
     <div class="animate-fade-in">
         <!-- Mobile Logo -->
         <div class="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <div class="w-14 h-14 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg shadow-cyan-200">
-                💰
-            </div>
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-14 h-14 rounded-2xl shadow-lg shadow-cyan-200 object-cover">
             <span class="text-2xl font-bold text-slate-900 dark:text-white">UKM Keuangan</span>
         </div>
 

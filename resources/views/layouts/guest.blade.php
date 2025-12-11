@@ -45,9 +45,7 @@
                 <div class="relative z-10 flex flex-col justify-center px-16">
                     <!-- Logo -->
                     <div class="flex items-center gap-4 mb-14">
-                        <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl shadow-xl">
-                            💰
-                        </div>
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-14 h-14 rounded-2xl shadow-xl object-cover">
                         <span class="text-2xl font-bold text-white">UKM Keuangan</span>
                     </div>
 

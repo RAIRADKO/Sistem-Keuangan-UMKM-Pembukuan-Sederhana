@@ -4,7 +4,7 @@
             <div class="flex items-center">
                 <!-- Logo -->
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-                    <span class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center text-white text-lg shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-200">💰</span>
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-200 object-cover">
                     <span class="hidden sm:inline text-lg font-bold text-slate-800 dark:text-white">UKM Keuangan</span>
                 </a>
 
