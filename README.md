@@ -182,7 +182,3 @@ Untuk mengubah informasi akun atau password:
 
 * Masuk ke menu **Profile** di pojok kanan atas aplikasi.
 * Edit data sesuai kebutuhan.
-
----
-
-Jika ingin saya buatkan versi **styled markdown**, **README dengan badge**, atau **versi bilingual (ID + EN)**, cukup beri tahu ya!
