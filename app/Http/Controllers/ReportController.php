@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
-use App\Models\Transaction;
+use App\Services\FinancialReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +11,10 @@ use App\Exports\TransactionsExport;
 
 class ReportController extends Controller
 {
+    public function __construct(
+        protected FinancialReportService $reportService
+    ) {}
+
     /**
      * Income report
      */
@@ -23,7 +26,11 @@ class ReportController extends Controller
             return redirect()->route('stores.create');
         }
 
-        $data = $this->getReportData($store, $request, 'income');
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
+        $accountId = $request->get('account_id');
+
+        $data = $this->reportService->getReportData($store, $startDate, $endDate, 'income', $accountId);
 
         return view('reports.income', $data);
     }
@@ -39,7 +46,11 @@ class ReportController extends Controller
             return redirect()->route('stores.create');
         }
 
-        $data = $this->getReportData($store, $request, 'expense');
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
+        $accountId = $request->get('account_id');
+
+        $data = $this->reportService->getReportData($store, $startDate, $endDate, 'expense', $accountId);
 
         return view('reports.expense', $data);
     }
@@ -58,38 +69,9 @@ class ReportController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
 
-        // Get income by category
-        $incomeByCategory = Transaction::where('store_id', $store->id)
-            ->where('type', 'income')
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->selectRaw('account_id, SUM(amount) as total')
-            ->groupBy('account_id')
-            ->with('account')
-            ->get();
+        $data = $this->reportService->getProfitLoss($store, $startDate, $endDate);
 
-        // Get expense by category
-        $expenseByCategory = Transaction::where('store_id', $store->id)
-            ->where('type', 'expense')
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->selectRaw('account_id, SUM(amount) as total')
-            ->groupBy('account_id')
-            ->with('account')
-            ->get();
-
-        $totalIncome = $incomeByCategory->sum('total');
-        $totalExpense = $expenseByCategory->sum('total');
-        $netProfit = $totalIncome - $totalExpense;
-
-        return view('reports.profit-loss', compact(
-            'store',
-            'startDate',
-            'endDate',
-            'incomeByCategory',
-            'expenseByCategory',
-            'totalIncome',
-            'totalExpense',
-            'netProfit'
-        ));
+        return view('reports.profit-loss', $data);
     }
 
     /**
@@ -106,55 +88,9 @@ class ReportController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
 
-        // Daily cash flow
-        $dailyCashflow = Transaction::where('store_id', $store->id)
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->selectRaw('transaction_date, type, SUM(amount) as total')
-            ->groupBy('transaction_date', 'type')
-            ->orderBy('transaction_date')
-            ->get()
-            ->groupBy('transaction_date');
+        $data = $this->reportService->getCashflow($store, $startDate, $endDate);
 
-        // Calculate running balance
-        $cashflowData = [];
-        $runningBalance = 0;
-
-        // Get previous balance
-        $previousIncome = Transaction::where('store_id', $store->id)
-            ->where('type', 'income')
-            ->where('transaction_date', '<', $startDate)
-            ->sum('amount');
-        $previousExpense = Transaction::where('store_id', $store->id)
-            ->where('type', 'expense')
-            ->where('transaction_date', '<', $startDate)
-            ->sum('amount');
-        $runningBalance = $previousIncome - $previousExpense;
-
-        $openingBalance = $runningBalance;
-
-        foreach ($dailyCashflow as $date => $transactions) {
-            $dayIncome = $transactions->where('type', 'income')->sum('total');
-            $dayExpense = $transactions->where('type', 'expense')->sum('total');
-            $runningBalance += ($dayIncome - $dayExpense);
-
-            $cashflowData[] = [
-                'date' => $date,
-                'income' => $dayIncome,
-                'expense' => $dayExpense,
-                'balance' => $runningBalance,
-            ];
-        }
-
-        $closingBalance = $runningBalance;
-
-        return view('reports.cashflow', compact(
-            'store',
-            'startDate',
-            'endDate',
-            'cashflowData',
-            'openingBalance',
-            'closingBalance'
-        ));
+        return view('reports.cashflow', $data);
     }
 
     /**
@@ -176,12 +112,7 @@ class ReportController extends Controller
             $transactionType = $type;
         }
 
-        $transactions = Transaction::where('store_id', $store->id)
-            ->when($transactionType, fn($q) => $q->where('type', $transactionType))
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->with(['account', 'user'])
-            ->orderBy('transaction_date')
-            ->get();
+        $transactions = $this->reportService->getExportData($store, $startDate, $endDate, $transactionType);
 
         $filename = "laporan_{$type}_{$startDate}_{$endDate}";
 
@@ -205,43 +136,5 @@ class ReportController extends Controller
         }
 
         abort(400, 'Format tidak didukung');
-    }
-
-    /**
-     * Get report data based on type
-     */
-    private function getReportData($store, Request $request, $type)
-    {
-        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
-        $accountId = $request->get('account_id');
-
-        $query = Transaction::where('store_id', $store->id)
-            ->where('type', $type)
-            ->whereBetween('transaction_date', [$startDate, $endDate])
-            ->with(['account', 'user']);
-
-        if ($accountId) {
-            $query->where('account_id', $accountId);
-        }
-
-        $transactions = $query->orderBy('transaction_date', 'desc')->get();
-
-        // Group by category
-        $byCategory = $transactions->groupBy('account_id')->map(function ($items, $accountId) {
-            return [
-                'account' => $items->first()->account,
-                'total' => $items->sum('amount'),
-                'count' => $items->count(),
-            ];
-        })->values();
-
-        $accounts = Account::where('store_id', $store->id)
-            ->where('type', $type)
-            ->get();
-
-        $total = $transactions->sum('amount');
-
-        return compact('store', 'transactions', 'byCategory', 'accounts', 'total', 'startDate', 'endDate', 'type');
     }
 }

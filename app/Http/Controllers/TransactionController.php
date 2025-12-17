@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTransactionRequest;
+use App\Http\Requests\UpdateTransactionRequest;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -93,28 +95,10 @@ class TransactionController extends Controller
     /**
      * Store a newly created transaction
      */
-    public function store(Request $request)
+    public function store(StoreTransactionRequest $request)
     {
         $store = Auth::user()->currentStore();
-
-        if (!$store) {
-            return redirect()->route('stores.create');
-        }
-
-        $validated = $request->validate([
-            'account_id' => 'required|exists:accounts,id',
-            'type' => 'required|in:income,expense',
-            'amount' => 'required|numeric|min:0',
-            'transaction_date' => 'required|date',
-            'description' => 'nullable|string',
-            'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
-
-        // Verify account belongs to store
-        $account = Account::findOrFail($validated['account_id']);
-        if ($account->store_id !== $store->id) {
-            abort(403);
-        }
+        $validated = $request->validated();
 
         $validated['store_id'] = $store->id;
         $validated['user_id'] = Auth::id();
@@ -136,7 +120,7 @@ class TransactionController extends Controller
      */
     public function show(Transaction $transaction)
     {
-        $this->authorizeTransaction($transaction);
+        $this->authorize('view', $transaction);
 
         return view('transactions.show', compact('transaction'));
     }
@@ -146,7 +130,7 @@ class TransactionController extends Controller
      */
     public function edit(Transaction $transaction)
     {
-        $this->authorizeTransaction($transaction);
+        $this->authorize('update', $transaction);
 
         $store = Auth::user()->currentStore();
         $accounts = Account::where('store_id', $store->id)
@@ -159,20 +143,12 @@ class TransactionController extends Controller
     /**
      * Update the specified transaction
      */
-    public function update(Request $request, Transaction $transaction)
+    public function update(UpdateTransactionRequest $request, Transaction $transaction)
     {
-        $this->authorizeTransaction($transaction);
+        $this->authorize('update', $transaction);
 
         $store = Auth::user()->currentStore();
-
-        $validated = $request->validate([
-            'account_id' => 'required|exists:accounts,id',
-            'type' => 'required|in:income,expense',
-            'amount' => 'required|numeric|min:0',
-            'transaction_date' => 'required|date',
-            'description' => 'nullable|string',
-            'proof_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
+        $validated = $request->validated();
 
         // Handle file upload
         if ($request->hasFile('proof_file')) {
@@ -195,7 +171,7 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
-        $this->authorizeTransaction($transaction);
+        $this->authorize('delete', $transaction);
 
         // Delete proof file
         if ($transaction->proof_file) {
@@ -206,17 +182,5 @@ class TransactionController extends Controller
 
         return redirect()->route('transactions.index')
             ->with('success', 'Transaksi berhasil dihapus!');
-    }
-
-    /**
-     * Check if user has access to transaction's store
-     */
-    private function authorizeTransaction(Transaction $transaction)
-    {
-        $store = Auth::user()->currentStore();
-
-        if (!$store || $transaction->store_id !== $store->id) {
-            abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
-        }
     }
 }
