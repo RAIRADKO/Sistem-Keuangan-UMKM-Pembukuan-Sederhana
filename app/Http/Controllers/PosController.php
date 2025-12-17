@@ -43,7 +43,14 @@ class PosController extends Controller
             ->where('type', 'income')
             ->first();
 
-        return view('pos.index', compact('store', 'products', 'categories', 'incomeAccount'));
+        // Get customers for debt recording
+        $customers = \App\Models\Contact::where('store_id', $store->id)
+            ->where('type', 'customer')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('pos.index', compact('store', 'products', 'categories', 'incomeAccount', 'customers'));
     }
 
     /**
@@ -59,6 +66,8 @@ class PosController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'payment_amount' => 'required|numeric|min:0',
+            'customer_name' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -101,7 +110,49 @@ class PosController extends Controller
                 ];
             }
 
-            // Create transaction
+            // Calculate debt logic
+            $totalFloat = round((float)$total, 2);
+            $paymentFloat = round($validated['payment_amount'], 2);
+            $debtAmount = 0;
+            $change = 0;
+            $customerId = null;
+
+            if ($paymentFloat < $totalFloat) {
+                // Determine debt
+                if (empty($validated['customer_name'])) {
+                    throw new \Exception('Pembayaran kurang dari total. Harap isi Nama Pelanggan untuk mencatat piutang.');
+                }
+
+                $debtAmount = $totalFloat - $paymentFloat;
+
+                // Find or Create Customer
+                // Search for existing active customer with same name
+                $customer = \App\Models\Contact::where('store_id', $store->id)
+                    ->where('type', 'customer')
+                    ->where('name', $validated['customer_name'])
+                    ->when(!empty($validated['customer_phone']), function($q) use ($validated) {
+                         return $q->where('phone', $validated['customer_phone']);
+                    })
+                    ->first();
+
+                if (!$customer) {
+                    $customer = \App\Models\Contact::create([
+                        'store_id' => $store->id,
+                        'name' => $validated['customer_name'],
+                        'phone' => $validated['customer_phone'] ?? null,
+                        'type' => 'customer',
+                        'is_active' => true,
+                        // Address and notes handling could be added if needed
+                    ]);
+                }
+                
+                $customerId = $customer->id;
+
+            } else {
+                $change = $paymentFloat - $totalFloat;
+            }
+
+            // Create transaction (FULL AMOUNT as Revenue)
             $transaction = Transaction::create([
                 'store_id' => $store->id,
                 'account_id' => $incomeAccount->id,
@@ -109,8 +160,24 @@ class PosController extends Controller
                 'type' => 'income',
                 'amount' => $total,
                 'transaction_date' => now(),
-                'description' => $validated['notes'] ?? 'Penjualan POS',
+                'description' => ($validated['notes'] ?? 'Penjualan POS') . ($debtAmount > 0 ? " (Piutang: Rp " . number_format($debtAmount, 0, ',', '.') . ")" : ""),
             ]);
+
+            // Create Debt record if needed
+            if ($debtAmount > 0 && $customerId) {
+                \App\Models\Debt::create([
+                    'store_id' => $store->id,
+                    'contact_id' => $customerId,
+                    'user_id' => Auth::id(),
+                    'type' => 'receivable', // Piutang
+                    'total_amount' => $debtAmount,
+                    'paid_amount' => 0,
+                    'status' => 'unpaid',
+                    'debt_date' => now(),
+                    'due_date' => null,
+                    'description' => 'Piutang dari Transaksi POS #' . $transaction->id,
+                ]);
+            }
 
             // Create transaction items and update stock
             foreach ($itemsData as $itemData) {
@@ -146,17 +213,15 @@ class PosController extends Controller
 
             DB::commit();
 
-            // Calculate change using bcmath for precision
-            $change = bcsub((string)$validated['payment_amount'], (string)$total, 2);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil!',
                 'data' => [
                     'transaction_id' => $transaction->id,
-                    'total' => round((float)$total, 2),
-                    'payment' => round($validated['payment_amount'], 2),
-                    'change' => round((float)$change, 2),
+                    'total' => $totalFloat,
+                    'payment' => $paymentFloat,
+                    'change' => $change,
+                    'debt_amount' => $debtAmount,
                 ],
             ]);
 

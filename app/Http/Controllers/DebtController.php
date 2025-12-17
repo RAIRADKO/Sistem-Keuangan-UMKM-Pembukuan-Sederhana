@@ -114,7 +114,8 @@ class DebtController extends Controller
         }
 
         $validated = $request->validate([
-            'contact_id' => 'required|exists:contacts,id',
+            'contact_name' => 'required|string|max:255',
+            'contact_phone' => 'nullable|string|max:20',
             'type' => 'required|in:payable,receivable',
             'total_amount' => 'required|numeric|min:0',
             'debt_date' => 'required|date',
@@ -122,18 +123,41 @@ class DebtController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Verify contact belongs to store
-        $contact = Contact::findOrFail($validated['contact_id']);
-        if ($contact->store_id !== $store->id) {
-            abort(403);
+        $contactType = $validated['type'] === 'payable' ? 'supplier' : 'customer';
+
+        // Find or Create Contact
+        $contact = Contact::where('store_id', $store->id)
+            ->where('type', $contactType)
+            ->where('name', $validated['contact_name'])
+            ->when(!empty($validated['contact_phone']), function($q) use ($validated) {
+                return $q->where('phone', $validated['contact_phone']);
+            })
+            ->first();
+
+        if (!$contact) {
+            $contact = Contact::create([
+                'store_id' => $store->id,
+                'name' => $validated['contact_name'],
+                'phone' => $validated['contact_phone'] ?? null,
+                'type' => $contactType,
+                'is_active' => true,
+            ]);
         }
 
-        $validated['store_id'] = $store->id;
-        $validated['user_id'] = Auth::id();
-        $validated['paid_amount'] = 0;
-        $validated['status'] = 'unpaid';
+        $data = [
+            'store_id' => $store->id,
+            'contact_id' => $contact->id,
+            'user_id' => Auth::id(),
+            'type' => $validated['type'],
+            'total_amount' => $validated['total_amount'],
+            'debt_date' => $validated['debt_date'],
+            'due_date' => $validated['due_date'],
+            'description' => $validated['description'],
+            'paid_amount' => 0,
+            'status' => 'unpaid',
+        ];
 
-        Debt::create($validated);
+        Debt::create($data);
 
         $typeLabel = $validated['type'] === 'payable' ? 'Hutang' : 'Piutang';
 

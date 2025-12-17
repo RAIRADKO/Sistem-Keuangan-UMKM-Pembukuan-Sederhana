@@ -33,22 +33,19 @@
                 <input type="hidden" name="type" value="{{ $type }}">
 
                 <div>
-                    <label for="contact_id" class="form-label">{{ $type === 'payable' ? 'Supplier' : 'Pelanggan' }} <span class="text-rose-500">*</span></label>
-                    <select id="contact_id" name="contact_id" required class="form-input @error('contact_id') border-rose-500 @enderror">
-                        <option value="">Pilih {{ $type === 'payable' ? 'Supplier' : 'Pelanggan' }}</option>
-                        @foreach($contacts as $contact)
-                            <option value="{{ $contact->id }}" {{ old('contact_id', request('contact_id')) == $contact->id ? 'selected' : '' }}>{{ $contact->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('contact_id')
-                        <p class="mt-1 text-sm text-rose-500">{{ $message }}</p>
-                    @enderror
-                    @if($contacts->count() === 0)
-                        <p class="mt-2 text-sm text-slate-500">
-                            Belum ada {{ $type === 'payable' ? 'supplier' : 'pelanggan' }}.
-                            <a href="{{ route('contacts.create', ['type' => $type === 'payable' ? 'supplier' : 'customer']) }}" class="text-cyan-600 hover:text-cyan-700">Tambah sekarang</a>
-                        </p>
-                    @endif
+                    <label class="form-label">Data {{ $type === 'payable' ? 'Supplier' : 'Pelanggan' }} <span class="text-rose-500">*</span></label>
+                    <div class="space-y-3">
+                        <input type="text" name="contact_name" value="{{ old('contact_name') }}" required 
+                               placeholder="Nama {{ $type === 'payable' ? 'Supplier' : 'Pelanggan' }}"
+                               class="form-input @error('contact_name') border-rose-500 @enderror">
+                        @error('contact_name')
+                            <p class="mt-1 text-sm text-rose-500">{{ $message }}</p>
+                        @enderror
+
+                        <input type="text" name="contact_phone" value="{{ old('contact_phone') }}" 
+                               placeholder="Nomor Telepon (Opsional)"
+                               class="form-input @error('contact_phone') border-rose-500 @enderror">
+                    </div>
                 </div>
 
                 <div>

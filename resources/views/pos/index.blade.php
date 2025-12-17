@@ -100,10 +100,29 @@
 
                 <!-- Cart Footer -->
                 <div class="p-4 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                    <!-- Customer Form (Visible when needed for Debt or optional) -->
+                    <div id="customerForm" class="space-y-2" style="display: none;">
+                        <label class="block text-sm font-medium text-slate-600 dark:text-slate-400">Data Pelanggan (Wajib jika Hutang)</label>
+                        <input type="text" id="customerName" placeholder="Nama Pelanggan" 
+                               class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 text-sm">
+                        <input type="text" id="customerPhone" placeholder="No. HP (Opsional)" 
+                               class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 text-sm">
+                    </div>
+
                     <!-- Total -->
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-medium text-slate-600 dark:text-slate-400">Total</span>
                         <span id="cartTotal" class="text-2xl font-bold text-slate-900 dark:text-white">Rp 0</span>
+                    </div>
+
+                    <!-- Payment Mode Toggle -->
+                    <div class="grid grid-cols-2 gap-2 mb-4 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                        <button onclick="setPaymentMode('cash')" id="btnModeCash" class="py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white dark:bg-slate-600 text-slate-900 dark:text-white">
+                            Tunai
+                        </button>
+                        <button onclick="setPaymentMode('debt')" id="btnModeDebt" class="py-2 rounded-lg font-bold text-sm transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                            Hutang / Tempo
+                        </button>
                     </div>
 
                     <!-- Payment Input -->
@@ -116,20 +135,20 @@
                         </div>
                     </div>
 
-                    <!-- Change -->
+                    <!-- Change / Debt -->
                     <div class="flex justify-between items-center text-lg">
-                        <span class="font-medium text-slate-600 dark:text-slate-400">Kembalian</span>
+                        <span id="changeLabel" class="font-medium text-slate-600 dark:text-slate-400">Kembalian</span>
                         <span id="changeAmount" class="font-bold text-emerald-600 dark:text-emerald-400">Rp 0</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
-                    <div class="grid grid-cols-4 gap-2">
+                    <div id="quickAmountButtons" class="grid grid-cols-4 gap-2">
                         <button onclick="quickPay(10000)" class="py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm">10K</button>
                         <button onclick="quickPay(20000)" class="py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm">20K</button>
                         <button onclick="quickPay(50000)" class="py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm">50K</button>
                         <button onclick="quickPay(100000)" class="py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm">100K</button>
                     </div>
-                    <button onclick="payExact()" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Uang Pas</button>
+                    <button onclick="payExact()" id="btnExact" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Uang Pas</button>
 
                     <!-- Action Buttons -->
                     <div class="grid grid-cols-2 gap-3">
@@ -163,6 +182,45 @@
 
     <script>
         let cart = [];
+        let currentMode = 'cash'; // 'cash' or 'debt'
+
+        function setPaymentMode(mode) {
+            currentMode = mode;
+            const btnCash = document.getElementById('btnModeCash');
+            const btnDebt = document.getElementById('btnModeDebt');
+            const customerForm = document.getElementById('customerForm');
+            const quickButtons = document.getElementById('quickAmountButtons');
+            const btnExact = document.getElementById('btnExact');
+            const paymentInput = document.getElementById('paymentInput');
+
+            if (mode === 'cash') {
+                // Style Active
+                btnCash.className = "py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white dark:bg-slate-600 text-slate-900 dark:text-white";
+                btnDebt.className = "py-2 rounded-lg font-bold text-sm transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200";
+                
+                // Behavior
+                customerForm.style.display = 'none';
+                quickButtons.style.display = 'grid';
+                btnExact.style.display = 'block';
+                
+                // Auto fill payment with total for convenience
+                payExact(); 
+            } else {
+                // Style Active
+                btnDebt.className = "py-2 rounded-lg font-bold text-sm transition-all shadow-sm bg-white dark:bg-slate-600 text-slate-900 dark:text-white";
+                btnCash.className = "py-2 rounded-lg font-bold text-sm transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200";
+                
+                // Behavior
+                customerForm.style.display = 'block';
+                quickButtons.style.display = 'none'; // Hide quick pay for debt
+                btnExact.style.display = 'none';
+                
+                // Reset payment to 0 (since it's debt/credit)
+                paymentInput.value = 0;
+                document.getElementById('customerName').focus(); // Focus on name
+            }
+            updateChange();
+        }
 
         function formatRupiah(amount) {
             return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount);
@@ -188,6 +246,13 @@
             }
 
             renderCart();
+            
+            // Re-apply current mode logic (e.g. update totals)
+            if (currentMode === 'cash') {
+                payExact();
+            } else {
+                updateChange();
+            }
         }
 
         function updateQuantity(id, delta) {
@@ -278,6 +343,11 @@
             checkoutBtn.disabled = false;
 
             updateChange();
+            
+            // Initialize mode state on first render if needed, or keep existing
+             if (currentMode === 'cash' && document.getElementById('paymentInput').value === '') {
+                 // payExact(); // Don't auto-pay on every render if user is typing
+             }
         }
 
         function getTotal() {
@@ -299,9 +369,41 @@
             const total = getTotal();
             const payment = parseFloat(document.getElementById('paymentInput').value) || 0;
             const change = payment - total;
-            document.getElementById('changeAmount').textContent = formatRupiah(Math.max(0, change));
+            const changeLabel = document.getElementById('changeLabel');
+            const changeAmount = document.getElementById('changeAmount');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const customerName = document.getElementById('customerName').value.trim();
+
+            if (change < 0) {
+                // Kurang bayar (Potensi Hutang)
+                changeLabel.textContent = 'Sisa (Hutang)';
+                changeAmount.textContent = formatRupiah(Math.abs(change));
+                changeAmount.className = 'font-bold text-rose-600 dark:text-rose-400';
+                
+                // Check requirements based on mode
+                if (currentMode === 'debt' || change < 0) { 
+                    // If mode is debt OR implicitly debt due to underpayment
+                     if (customerName) {
+                        checkoutBtn.disabled = false;
+                        checkoutBtn.textContent = 'Catat Hutang';
+                        checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                     } else {
+                        checkoutBtn.textContent = 'Isi Nama Pelanggan!';
+                        checkoutBtn.disabled = true;
+                        checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                     }
+                }
+            } else {
+                changeLabel.textContent = 'Kembalian';
+                changeAmount.textContent = formatRupiah(change);
+                changeAmount.className = 'font-bold text-emerald-600 dark:text-emerald-400';
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Bayar';
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
 
+        document.getElementById('customerName').addEventListener('input', updateChange);
         document.getElementById('paymentInput').addEventListener('input', updateChange);
 
         function processCheckout() {
@@ -313,9 +415,18 @@
             const total = getTotal();
             const payment = parseFloat(document.getElementById('paymentInput').value) || 0;
 
+            const customerName = document.getElementById('customerName').value.trim();
+
             if (payment < total) {
-                alert('Pembayaran kurang!');
-                return;
+                if (!customerName) {
+                    alert('Pembayaran kurang! Harap isi Nama Pelanggan untuk mencatat sebagai hutang.');
+                    // Highlight input
+                    document.getElementById('customerName').focus();
+                    document.getElementById('customerName').classList.add('ring-2', 'ring-rose-500');
+                    return;
+                }
+                const confirmDebt = confirm(`Pembayaran kurang Rp ${formatRupiah(total - payment)}. Sisa akan dicatat sebagai hutang atas nama "${customerName}". Lanjutkan?`);
+                if (!confirmDebt) return;
             }
 
             const checkoutBtn = document.getElementById('checkoutBtn');
@@ -335,14 +446,23 @@
                         unit_price: item.price,
                     })),
                     payment_amount: payment,
+                    customer_name: document.getElementById('customerName').value.trim(),
+                    customer_phone: document.getElementById('customerPhone').value.trim(),
                 }),
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     const change = payment - total;
-                    document.getElementById('successMessage').innerHTML = 
-                        `Total: ${formatRupiah(total)}<br>Bayar: ${formatRupiah(payment)}<br>Kembalian: ${formatRupiah(change)}`;
+                    let msg = `Total: ${formatRupiah(total)}<br>Bayar: ${formatRupiah(payment)}`;
+                    
+                    if (data.data.debt_amount > 0) {
+                        msg += `<br><span class="text-rose-600 font-bold">Piutang: ${formatRupiah(data.data.debt_amount)}</span>`;
+                    } else {
+                        msg += `<br>Kembalian: ${formatRupiah(data.data.change)}`;
+                    }
+                    
+                    document.getElementById('successMessage').innerHTML = msg;
                     document.getElementById('successModal').classList.remove('hidden');
                 } else {
                     alert(data.message || 'Gagal memproses transaksi');
@@ -362,6 +482,8 @@
             document.getElementById('successModal').classList.add('hidden');
             cart = [];
             document.getElementById('paymentInput').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
             renderCart();
             location.reload(); // Refresh to get updated stock
         }
