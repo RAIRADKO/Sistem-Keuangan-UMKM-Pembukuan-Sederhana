@@ -79,7 +79,9 @@ class PosController extends Controller
             $itemsData = [];
             
             foreach ($validated['items'] as $item) {
+                // Use pessimistic locking to prevent race condition
                 $product = Product::where('store_id', $store->id)
+                    ->lockForUpdate()
                     ->findOrFail($item['product_id']);
 
                 // Check stock availability
@@ -87,14 +89,15 @@ class PosController extends Controller
                     throw new \Exception("Stok {$product->name} tidak mencukupi. Tersedia: {$product->stock_quantity}");
                 }
 
-                $subtotal = $item['quantity'] * $item['unit_price'];
-                $total += $subtotal;
+                // Use bcmath for precise decimal calculations
+                $subtotal = bcmul((string)$item['quantity'], (string)$item['unit_price'], 2);
+                $total = bcadd((string)$total, $subtotal, 2);
 
                 $itemsData[] = [
                     'product' => $product,
                     'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => $subtotal,
+                    'unit_price' => round($item['unit_price'], 2),
+                    'subtotal' => round((float)$subtotal, 2),
                 ];
             }
 
@@ -143,17 +146,17 @@ class PosController extends Controller
 
             DB::commit();
 
-            // Calculate change
-            $change = $validated['payment_amount'] - $total;
+            // Calculate change using bcmath for precision
+            $change = bcsub((string)$validated['payment_amount'], (string)$total, 2);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil!',
                 'data' => [
                     'transaction_id' => $transaction->id,
-                    'total' => $total,
-                    'payment' => $validated['payment_amount'],
-                    'change' => $change,
+                    'total' => round((float)$total, 2),
+                    'payment' => round($validated['payment_amount'], 2),
+                    'change' => round((float)$change, 2),
                 ],
             ]);
 
